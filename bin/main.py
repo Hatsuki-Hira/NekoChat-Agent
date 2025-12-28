@@ -58,8 +58,8 @@ async def message_response(user_input: str, uploaded_files: List[UploadFile]) ->
 
     if uploaded_files:
         for file in uploaded_files:
-            print(file.content_type)
-            if file.content_type in ['image/jpeg', 'image/png']:
+            img_base64 = base64.b64encode(await file.read()).decode('utf-8')
+            if file.content_type in ['image/jpeg', 'image/png', 'image/webp']:
                 # 保存文件到 static 目录，并传入数据列表
                 with open(os.path.join(static_path, file.filename), "wb") as f:
                     f.write(await file.read())
@@ -67,7 +67,7 @@ async def message_response(user_input: str, uploaded_files: List[UploadFile]) ->
                 input_content.append({
                     "type": "image_url",
                     "image_url": {
-                        "url": f"data:{file.content_type};base64,{base64.b64encode(await file.read()).decode('utf-8')}",
+                        "url": f"data:{file.content_type};base64,{img_base64}",
                         "detail": "high"
                     }
                 })
@@ -75,6 +75,7 @@ async def message_response(user_input: str, uploaded_files: List[UploadFile]) ->
     # 调用api
     output = flow_main(input_content=input_content)
     async for i in output:
+        "i".replace('~', '\~') # 防止前端渲染波浪线的时候两个波浪线之间的内容变为删除线，强制转义
         yield f"data: {json.dumps({'content': i})}\n\n"  # SSE数据块格式，要匹配数据格式！
 
 

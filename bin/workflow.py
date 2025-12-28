@@ -59,6 +59,9 @@ async def flow_main(input_content: list) -> AsyncGenerator:
             
         except Exception as e:
             print(f"解析工具参数失败: {e}")
+    
+    # 打印token使用量
+    print(ai.token_info)
 
 
 
@@ -68,4 +71,6 @@ async def flow_main(input_content: list) -> AsyncGenerator:
 
 '''
 #重要！：不要使用内置的思考链逻辑生成推理（<thinking>的内容），请直接生成对话内容
+
+在每一个波浪线 `~` 前添加反斜杠 `\` 转义（即写成 `\~`），使得 Markdown 不会将相邻的波浪线解析为删除线格式。
 '''

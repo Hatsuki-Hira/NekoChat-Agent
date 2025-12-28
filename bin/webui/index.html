@@ -301,7 +301,7 @@
                         try {
                             const data = JSON.parse(trimmedLine.substring(6)); // 提取json
                             // OpenAI api return : data.choices[0].delta.content
-                            const content = data.choices?.[0]?.delta?.content || data.content; // 前面半段没用，需要删除
+                            const content = data.content;
                             if (content) {
                                 botContent += content;
                                 // 实时渲染 Markdown 并强制触发代码高亮
