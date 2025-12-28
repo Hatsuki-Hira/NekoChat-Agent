@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NekoChat - Multimodal Agent Terminal | WebUI</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff; color: #374151;
+        }
+
+        body::before {
+            content: "";
+            /* (背景：创建一个覆盖全屏的虚拟层) */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            
+            /* 你的原背景配置 */
+            background-image: url('/static/background.jpg');
+            background-position: center center; /* 水平居中，垂直居中 */
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+
+            /* 核心模糊效果 */
+            filter: blur(2px);
+            
+            /* (动作：为了消除模糊边缘产生的白边，稍微放大背景图scale(1.1)) */
+            transform: scale(1.0); 
+            
+            /* 确保背景在所有内容之下 */
+            z-index: -1;
+        }
+        
+        /* 自定义图标颜色渐变流动动画 */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animate-gradient {
+            background-size: 200% 200%; /* 放大背景以便移动 */
+            animation: gradient-shift 5s ease infinite; /* 3秒一个循环，平滑过渡 */
+        }
+
+        /* 滚动条美化 */
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        
+        /* Markdown 样式微调 */
+        .prose pre { 
+            background: #0d1117 !important; 
+            padding: 1rem; 
+            border-radius: 0.5rem; 
+            font-size: 0.85rem !important; 
+            margin: 0.75rem 0;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        /* 仅对行内代码（非代码块）应用淡红色样式 */
+        :not(pre) > code { 
+            font-size: 0.85rem; 
+            color: #eb5757; 
+            background: #f3f4f6;
+            padding: 0.15rem 0.3rem;
+            border-radius: 0.25rem;
+            font-family: 'Menlo', 'Monaco', monospace; 
+        }
+
+        .prose p { margin-bottom: 0.5rem; line-height: 1.6; }
+
+        /* 消息气泡效果 */
+        .user-msg-bubble {
+            background-color: #f0f4f9;
+            border-radius: 1.25rem 1.25rem 0.2rem 1.25rem;
+            font-size: 0.95rem;
+        }
+        
+        .bot-text { font-size: 0.95rem; }
+
+        /* 动画 */
+        .fade-in-up { animation: fadeInUp 0.3s ease-out; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <header class="flex items-center justify-between px-6 py-2 border-b border-gray-100 bg-white/80 backdrop-blur-md z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-7 h-7 bg-gradient-to-br from-green-500 via-blue-500 to-purple-600 rounded-lg shadow-md animate-gradient"></div>
+            <h1 class="text-lg font-semibold text-gray-700 tracking-tight"> </h1>
+        </div>
+        <div class="flex items-center gap-3 text-gray-400">
+            <a href="https://github.com/Hatsuki-Hira" target="_blank" 
+                class="text-base text-gray-400 tracking-tight hover:text-[#ebd3f0] transition-colors">
+                Hatsuki-Hira
+            </a>
+            <i data-lucide="bell" class="w-4 h-4 cursor-pointer hover:text-gray-600 transition-colors"></i>
+            <div class="w-7 h-7 rounded-full bg-gray-100 border border-gray-200"></div>
+            <!-- <img src="/static/Picture.jpg" 
+             alt="Picture" 
+             class="w-7 h-7 rounded-full border border-gray-200 object-cover shadow-sm"> -->
+        </div>
+    </header>
+
+    <main id="chat-container" class="flex-1 overflow-y-auto chat-scroll px-4 md:px-0">
+        <div id="chat-window" class="max-w-4xl mx-auto py-8 pb-40 space-y-8">
+            <div id="welcome-msg" class="flex flex-col items-center justify-center py-16 text-center">
+                <h2 class="text-4xl font-light bg-gradient-to-r from-blue-600 to-pink-500 bg-clip-text text-transparent mb-3 animate-gradient">
+                    Hi, 有什么我可以帮您的？
+                </h2>
+                <p class="text-sm text-gray-400">输入或上传文件以开始对话</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="fixed bottom-0 left-0 w-full bg-transparent p-4 z-20">
+            <div class="relative bg-gray-100/40 rounded-[1.5rem] border border-gray-200 shadow-sm focus-within:shadow-md focus-within:border-blue-200 transition-all duration-300 backdrop-blur-xl">
+                
+                <div id="preview-area" class="flex flex-wrap gap-2 p-3 border-b border-gray-200 hidden"></div>
+                
+                <div class="flex items-end p-1.5 px-3">
+                    <label class="p-2.5 mb-0.5 cursor-pointer text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
+                        <i data-lucide="image-plus" class="w-5 h-5"></i>
+                        <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
+                    </label>
+                    
+                    <textarea id="user-input" rows="1" placeholder="在此输入..." 
+                        class="flex-1 bg-transparent border-none outline-none p-3 text-base resize-none max-h-[150px] leading-normal"></textarea>
+                    
+                    <button id="send-btn" class="p-2.5 mb-0.5 text-blue-600 hover:bg-blue-100 rounded-full transition-all disabled:opacity-20" disabled>
+                        <i data-lucide="send-horizontal" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        <div class="text-[10px] text-center text-gray-400 mt-2 uppercase tracking-widest opacity-60">
+            Made with ❤ by 羽月ひら
+        </div>
+    </footer>
+
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+
+        const chatWindow = document.getElementById('chat-window');
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const fileInput = document.getElementById('file-input');
+        const previewArea = document.getElementById('preview-area');
+        const welcomeMsg = document.getElementById('welcome-msg');
+
+        // 当agent输出时不允许发送消息
+        let ifAgentIsTyping = false;
+
+        // 输入框自适应高度及发送按钮状态
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            updateSendButton();
+        });
+
+        function updateSendButton() {
+            sendBtn.disabled = !(userInput.value.trim() || fileInput.files.length > 0);
+        }
+
+        // 处理多图预览逻辑
+        fileInput.onchange = () => {
+            const files = Array.from(fileInput.files);
+            if (files.length > 0) {
+                previewArea.innerHTML = '';
+                previewArea.classList.remove('hidden');
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = "w-14 h-14 relative fade-in-up";
+                        div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm">`;
+                        previewArea.appendChild(div);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                previewArea.classList.add('hidden');
+            }
+            updateSendButton();
+        };
+
+        // 发送消息核心函数
+        async function sendMessage() {
+            if (ifAgentIsTyping === true) return;
+            ifAgentIsTyping = true; // agent输出中，关闭输入按钮
+
+            const text = userInput.value.trim();
+            const files = fileInput.files;
+
+            if (!text && files.length === 0) return;
+
+            // 1. 隐藏欢迎语
+            if (welcomeMsg) welcomeMsg.style.display = 'none';
+
+            // 2. 渲染用户消息 UI
+            let imgHtml = files.length > 0 ? '<div class="flex flex-wrap gap-2 mb-2">' : '';
+            for (let i = 0; i < files.length; i++) {
+                imgHtml += `<img src="${URL.createObjectURL(files[i])}" class="max-w-[400px] max-h-[400px] rounded-lg border border-white shadow-sm">`;
+            }
+            if (files.length > 0) imgHtml += '</div>';
+
+            chatWindow.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-end w-full fade-in-up">
+                    <div class="user-msg-bubble p-3.5 px-4 text-gray-700 max-w-[80%] shadow-xs">
+                        ${imgHtml}
+                        <div class="whitespace-pre-wrap">${text}</div>
+                    </div>
+                </div>`);
+
+            // 3. 构造 FormData 并清理输入框
+            const formData = new FormData();
+            formData.append('message', text || "");
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            fileInput.value = '';
+            previewArea.innerHTML = '';
+            previewArea.classList.add('hidden');
+            sendBtn.disabled = true;
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+
+            // 4. 创建机器人回复占位符
+            const botId = 'bot-' + Date.now();
+            chatWindow.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-start w-full">
+                    <div class="flex gap-3 w-full">
+                        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                        <div id="${botId}" class="bot-text prose prose-slate max-w-none text-gray-700 leading-relaxed pt-0.5">
+                            <div class="flex gap-1 mt-1.5">
+                                <div class="w-1.5 h-1.5 bg-gray-200 rounded-full animate-bounce"></div>
+                                <div class="w-1.5 h-1.5 bg-gray-200 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                <div class="w-1.5 h-1.5 bg-gray-200 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`);
+            lucide.createIcons();
+
+            // 5. 异步流式请求后端
+            try {
+                const response = await fetch('/chat', { method: 'POST', body: formData });
+                const reader = response.body.getReader(); // 创建流式传输连接
+                const decoder = new TextDecoder();
+                let botContent = "";
+                const botDiv = document.getElementById(botId);
+                let buffer = ""; // 数据缓冲区，确保 JSON 完整
+
+                while (true) {
+                    const { value, done } = await reader.read(); // 数据包格式data: {"content": "Hello"}\n\n，SSE协议用双换行封口数据包
+                    if (done) {
+                        ifAgentIsTyping = false; // 输出完毕，允许用户再次输入
+                        break;
+                    }
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n'); // json完整时就赋值并切割（可能剩下不完整片段）
+                    buffer = lines.pop(); // 留下不完整的json片段，待拼接完整
+
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+                        // OpenAI api兼容：得到结束数据标志时中断（废弃，没有用）
+                        //if (JSON.parse(trimmedLine.substring(6)).choices?.[0]?.finish_reason) {
+                        //    ifAgentIsTyping = false;
+                        //    break;
+                        //}
+
+                        try {
+                            const data = JSON.parse(trimmedLine.substring(6)); // 提取json
+                            // OpenAI api return : data.choices[0].delta.content
+                            const content = data.choices?.[0]?.delta?.content || data.content; // 前面半段没用，需要删除
+                            if (content) {
+                                botContent += content;
+                                // 实时渲染 Markdown 并强制触发代码高亮
+                                botDiv.innerHTML = marked.parse(botContent);
+                                botDiv.querySelectorAll('pre code').forEach((block) => {
+                                    hljs.highlightElement(block);
+                                });
+                            }
+                        } catch (e) {
+                            console.error("解析 JSON 失败:", e);
+                        }
+                    }
+                    chatContainer.scrollTo({ top: chatContainer.scrollHeight });
+                }
+            } catch (err) {
+                document.getElementById(botId).innerHTML = `<span class="text-red-500 italic">连接异常，请检查后端运行状态。</span>`;
+            }
+        }
+
+        // 交互绑定
+        sendBtn.onclick = sendMessage;
+        userInput.onkeydown = (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        };
+    </script>
+</body>
+</html>
