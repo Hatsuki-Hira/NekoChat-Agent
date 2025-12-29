@@ -1,6 +1,5 @@
 from openai import AsyncOpenAI
 from typing import AsyncGenerator
-import json
 
 from small_tools import temp_memory
 
@@ -51,7 +50,7 @@ class StreamProcessor:
             # 处理流
             async for chunk in response:
                 # print(chunk)
-                # 处理常规回复
+                # 处理文本
                 if chunk.choices[0].delta.content:
                     #print(chunk.choices[0].delta.content, end="", flush=True)
                     mem_output.append(chunk.choices[0].delta.content)
@@ -77,7 +76,7 @@ class StreamProcessor:
                             collected_tool_calls[index]["arguments"] += tool_call.function.arguments
                 # 接收到末段工具调用碎片时
                 if chunk.choices[0].finish_reason == "tool_calls":
-                    print(f"[info] 模型决定调用工具：{collected_tool_calls}")
+                    print(f"[info] 模型调用工具：{collected_tool_calls}")
                     self.tool_info = collected_tool_calls
                 # 处理流结束
                 if chunk.choices[0].finish_reason:

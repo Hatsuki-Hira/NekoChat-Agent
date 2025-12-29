@@ -4,12 +4,12 @@ from typing import AsyncGenerator
 
 
 import using_openaiapi
-from small_tools import temp_memory, date, agent_tools
+from small_tools import temp_memory, date, agent_tools, mc_info
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROMPT = open(os.path.join(BASE_DIR, 'prompt.txt'), 'r', encoding='utf-8').read()
-#PROMPT = '你是一个ai agent，需要协助用户'
+#PROMPT = open(os.path.join(BASE_DIR, 'prompt.txt'), 'r', encoding='utf-8').read()
+PROMPT = '你是一个ai agent，需要协助用户解答问题、工具调用或者闲聊'
 PROMPT_SMART_ADDON = open(os.path.join(BASE_DIR, 'prompt_smart_addon.txt'), 'r', encoding='utf-8').read()
 
 
@@ -28,7 +28,8 @@ async def flow_main(input_content: list) -> AsyncGenerator:
 “{date.get()}
 {temp_memory.get()}”
 
-#markdown支持功能：若用户有需求，你选需要严格按照markdown格式输出，比如代码段高亮等功能（在开头的三个反引号后指定语言，比如```python\nprint('hello world')\n```）
+#markdown支持功能（高亮代码块、表格、列表等）：
+若用户有需求，你需要严格按照markdown格式输出，如代码段高亮等功能（在开头的三个反引号后指定语言，比如```python\nprint('hello world')\n```）
 
 #你可以调用所列出来的一些内置的ai agent工具使用
 
@@ -49,13 +50,14 @@ async def flow_main(input_content: list) -> AsyncGenerator:
     for index, call in ai.tool_info.items():
         try:
             full_args = json.loads(call["arguments"])
-            print(f"准备执行工具 {call['name']}，参数：{full_args}")
+            print(f"[info] 准备执行工具 {call['name']}，参数：{full_args}")
 
             if call['name'] == 'image':
                 print('1')
 
             if call['name'] == 'mc_ping':
-                print('2')
+                mcinfo = mc_info.get(full_args['ip'])
+                yield mcinfo
             
         except Exception as e:
             print(f"解析工具参数失败: {e}")
