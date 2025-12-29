@@ -8,6 +8,8 @@ def get(ip: str):
     latency = server.ping()
     try:
         query = server.query()
-        return f"当前有{onlines}个玩家在线，服务器延迟为{latency:.1f}ms\n玩家列表如下：{', '.join(query)}\n"
+        return f"""当前有{onlines}个玩家在线，服务器延迟为{latency:.1f}ms
+玩家列表如下：{', '.join(query)}\n"""
     except:
-        return f"当前有{onlines}个玩家在线，服务器延迟为{latency:.1f}ms\n服务器隐藏了详细的玩家名称列表\n"
+        return f"""当前有{onlines}个玩家在线，服务器延迟为{latency:.1f}ms
+服务器隐藏了详细的玩家名称列表\n"""

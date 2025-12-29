@@ -1,2 +1,2 @@
-firstly you need to install packages:
+first you need to install packages:
 pip install -r requirements.txt
