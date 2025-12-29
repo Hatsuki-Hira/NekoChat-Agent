@@ -133,7 +133,6 @@ class StreamProcessor:
                 # 处理常规回复
                 if chunk.choices[0].delta.reasoning_content:
                     mem_output.append(chunk.choices[0].delta.reasoning_content)
-                    print(chunk.choices[0].delta.reasoning_content)
                     yield chunk.choices[0].delta.reasoning_content
                 # 处理工具调用碎片
                 delta = chunk.choices[0].delta
