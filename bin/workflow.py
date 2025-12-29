@@ -9,7 +9,6 @@ from small_tools import temp_memory, date, agent_tools, mc_info
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROMPT = open(os.path.join(BASE_DIR, 'prompt.txt'), 'r', encoding='utf-8').read()
-#PROMPT = '你是一个ai agent，需要协助用户解答问题、工具调用或者闲聊'
 PROMPT_SMART_ADDON = open(os.path.join(BASE_DIR, 'prompt_smart_addon.txt'), 'r', encoding='utf-8').read()
 
 
