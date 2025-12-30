@@ -75,8 +75,8 @@ async def message_response(user_input: str, uploaded_files: List[UploadFile]) ->
     # 调用api
     output = flow_main(input_content=input_content)
     async for i in output:
-        i.replace('~', r'\~') # 防止前端渲染波浪线的时候两个波浪线之间的内容变为删除线，强制转义文本
-        i.replace('\n', '<br>') # html会吞掉换行符
+        i = i.replace('~', r'\~') # 防止前端渲染波浪线的时候两个波浪线之间的内容变为删除线，强制转义文本
+        i = i.replace('\n', '<br>') # html会吞掉换行符
         yield f"data: {json.dumps({'content': i})}\n\n"  # SSE数据块格式，要匹配数据格式！
 
 

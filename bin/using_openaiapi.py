@@ -7,7 +7,7 @@ from small_tools import temp_memory
 
 client = AsyncOpenAI(
     base_url='https://api.siliconflow.cn/v1',
-    api_key='sk-omrnidmbcfnkujbxpmcktnowsdyjvqlufqeafrgnmlsynhyq'
+    api_key=''
 )
 
 
