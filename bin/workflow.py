@@ -15,7 +15,7 @@ PROMPT_SMART_ADDON = open(os.path.join(BASE_DIR, 'prompt_smart_addon.txt'), 'r',
 
 # 主工作流
 async def flow_main(input_content: list) -> AsyncGenerator:
-    # 初次调用ai
+    # 调用ai
     ai = using_openaiapi.StreamProcessor()
     date.get()
     prompt=f'''
