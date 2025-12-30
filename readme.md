@@ -1,9 +1,7 @@
-## Use quickly
-Ensure your PC can run PowerShell script:
-open terminal
-type "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process"
+## 快速开始
 
-And run "launch.ps1" directly(right click your file)
+运行"launch.ps1"即可
 
-## Do it yourself~
-Create venv and install packages from requirements.txt
+## 自己动~
+
+创建虚拟环境并安装requirements.txt的依赖
